@@ -6,6 +6,8 @@ Check the title-screen Mods panel first for loaded, disabled, conflicting, and i
 
 For the exact omission, fallback, unknown-field, ID, and migration contract, see [Defaults and compatibility](defaults-and-compatibility.md).
 
+To look up a specific diagnostic such as `manifest.id` or `bundle.integrity`, use the generated [validation/error-code catalog](error-codes.md). The catalog is grouped by the prefix before the first period and is searchable by code, message text, or source file.
+
 ## Validate before launching the game
 
 From a source checkout, validate all repository examples with:

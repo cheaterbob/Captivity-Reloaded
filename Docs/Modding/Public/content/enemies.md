@@ -10,6 +10,10 @@ The Zombie I LibreSprite kit in `ModSDK/EnemyTemplates/Zombie1` builds a named-l
 
 Omit `extends` and use `visual.type: originalSkeletonAtlas` to make an enemy without cloning a Core NPC. The runtime constructs the actor rigidbody and body collider, sprite bones, projectile hit zones, ragdoll joints, attacks, procedural animation set, and reviewed AI from data. A complete example is `ExampleMods/prey-green-zombie/content/original-green-stalker.json`.
 
+The Unity shortcut is **Captivity Reloaded > Modding > Create Original Enemy...**. It can scaffold the enemy, test stage, animation documents, and optional DragonBones project while keeping each result schema-valid.
+
+![Unity Create Original Enemy window](../assets/screenshots/unity-create-enemy.png)
+
 An original visual requires:
 
 - `regions`: rectangles within one pack-local PNG atlas.
