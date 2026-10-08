@@ -1877,16 +1877,18 @@ public class Player : Actor
 		m_pleasureMax = ExternalRuleProfileFactory.ApplyPleasureMaximum(m_pleasureMaxBase);
 		m_libidoMax = ExternalRuleProfileFactory.ApplyLibidoMaximum(m_libidoMaxBase);
 		m_healthMax = m_healthMaxRuleBase * ExternalRuleProfileFactory.GetPlayerHealthMultiplier();
-		GetStat("HealthMax").SetValueBase(m_healthMax);
+		Stat healthMax = GetStat("HealthMax");
+		if (healthMax == null) return;
+		healthMax.SetValueBase(m_healthMax);
 		if (i_refillHearts)
 		{
-			m_healthCurrent = GetStat("HealthMax").GetValueTotal();
+			m_healthCurrent = healthMax.GetValueTotal();
 			m_staminaCurrent = m_healthCurrent;
 		}
 		else
 		{
-			m_healthCurrent = Mathf.Min(m_healthCurrent, GetStat("HealthMax").GetValueTotal());
-			m_staminaCurrent = Mathf.Min(m_staminaCurrent, GetStat("HealthMax").GetValueTotal());
+			m_healthCurrent = Mathf.Min(m_healthCurrent, healthMax.GetValueTotal());
+			m_staminaCurrent = Mathf.Min(m_staminaCurrent, healthMax.GetValueTotal());
 		}
 		m_pleasureCurrent = Mathf.Min(m_pleasureCurrent, m_pleasureMax);
 		m_libidoCurrent = Mathf.Min(m_libidoCurrent, m_libidoMax);
