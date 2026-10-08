@@ -122,6 +122,11 @@ public class PlayerController : MonoBehaviour
 		return m_mobileAimInput;
 	}
 
+	public Vector2 GetMobileMovementInput()
+	{
+		return m_leftJoystickInput;
+	}
+
 	public bool GetUseMobileDPad()
 	{
 		return PlayerPrefs.GetInt("MobileUseDPad", 0) == 1;

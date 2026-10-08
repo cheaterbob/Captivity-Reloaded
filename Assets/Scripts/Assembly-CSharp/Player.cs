@@ -2072,7 +2072,13 @@ public class Player : Actor
 		while (m_isWakingUp)
 		{
 			yield return new WaitForEndOfFrame();
-			if (Input.anyKey)
+			ManagerInput input = CommonReferences.Instance != null ? CommonReferences.Instance.GetManagerInput() : null;
+			PlayerController controller = CommonReferences.Instance != null ? CommonReferences.Instance.GetPlayerController() : null;
+			bool actionPressed = input != null && (input.IsButtonDown(InputButton.Jump)
+				|| input.IsButtonDown(InputButton.Use) || input.IsButtonDown(InputButton.PickUp));
+			bool mobilePressed = controller != null && controller.GetIsMobileControlsEnabled()
+				&& controller.GetIsMobileJumpPressed();
+			if (Input.anyKey || actionPressed || mobilePressed)
 			{
 				StopCoroutine(m_coroutineWakeUp);
 				m_coroutineWakeUp = null;
