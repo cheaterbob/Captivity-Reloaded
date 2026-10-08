@@ -59,6 +59,8 @@
     ] },
     "effects": { "type": "object", "additionalProperties": false, "properties": {
       "damageTakenMultiplier": { "type": "number", "minimum": 0.05, "maximum": 2 },
+      "escapePowerMultiplier": { "type": "number", "minimum": 0.1, "maximum": 3 },
+      "bountyMultiplier": { "type": "number", "minimum": 0, "maximum": 3 },
       "statModifiers": { "type": "object", "maxProperties": 8, "propertyNames": { "enum": ["HealthMax", "SpeedAccel", "SpeedMax", "Traction", "DamageMultiplierGun", "SpeedSprint", "PowerJump", "PowerDash"] }, "additionalProperties": { "type": "number", "minimum": -10000, "maximum": 10000 } }
     } }
   }

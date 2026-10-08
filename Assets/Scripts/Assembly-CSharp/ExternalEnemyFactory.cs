@@ -369,6 +369,7 @@ public sealed class ModEnemyBehaviorController : MonoBehaviour
 	private bool m_berserkActive;
 	private float m_nextSpeedPulse;
 	private float m_speedPulseEnd;
+	private float m_nextClothingEquip;
 	private readonly List<StatModifier> m_speedPulseModifiers = new List<StatModifier>();
 	private bool m_deathModulesHandled;
 
@@ -385,6 +386,7 @@ public sealed class ModEnemyBehaviorController : MonoBehaviour
 		m_nextRegeneration = Time.time;
 		m_nextSpeedPulse = Time.time;
 		m_speedPulseEnd = 0f;
+		m_nextClothingEquip = 0f;
 		m_deathModulesHandled = false;
 		if (m_npc != null)
 		{
@@ -449,6 +451,18 @@ public sealed class ModEnemyBehaviorController : MonoBehaviour
 		foreach (EnemyBehaviorModuleDefinition module in m_modules)
 			if (module.Type == "lifesteal") m_npc.RestoreHealth(module.Amount.Value);
 			else if (module.Type == "onHitRagdoll" && i_receiver != null) i_receiver.Ragdoll(module.DurationSeconds.Value);
+			else if (module.Type == "onHitEquipClothing" && i_receiver is Player player && Time.time >= m_nextClothingEquip
+				&& RollChance(module.Chance ?? 1f))
+			{
+				if (ModClothingEffects.TryForceEquip(player, module.Clothing))
+					m_nextClothingEquip = Time.time + (module.CooldownSeconds ?? 1f);
+			}
+	}
+
+	private static bool RollChance(float i_chance)
+	{
+		float chance = Mathf.Clamp01(i_chance);
+		return chance >= 1f || (chance > 0f && UnityEngine.Random.value < chance);
 	}
 
 	private void OnNpcGetHit(Actor i_attacker, Actor i_receiver)
@@ -1297,7 +1311,7 @@ public sealed class ModularEnemyFinisher : MonoBehaviour, ISmasherHudSource
 		bool pressed = UpdateQteInput(GetCurrentInputPattern(), input, controller);
 		if (pressed)
 		{
-			m_meter += GetCurrentInputPower();
+			m_meter += GetCurrentInputPower() * ModClothingEffects.GetEscapePowerMultiplier(m_player);
 			HudSmasher hud = CommonReferences.Instance.GetManagerHud().GetManagerHudRapeGames().GetHudSmasher();
 			if (hud != null) hud.Thrust();
 		}
@@ -1414,6 +1428,8 @@ public sealed class ModularEnemyFinisher : MonoBehaviour, ISmasherHudSource
 			m_waitForPlayerRecovery = true;
 			m_player.Ragdoll(i_outcome.PlayerRagdollSeconds.Value);
 		}
+		foreach (string clothing in i_outcome.EquipClothing ?? new List<string>())
+			ModClothingEffects.TryForceEquip(m_player, clothing);
 	}
 
 	private void OnDisable()

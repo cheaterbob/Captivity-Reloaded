@@ -150,6 +150,7 @@ public class RaperSmasher : RaperGame, ISmasherHudSource
 		}
 		DifficultyDefinition difficulty = DifficultyRegistry.Current;
 		num *= difficulty == null ? 1f : difficulty.EscapeStrengthMultiplier;
+		num *= ModClothingEffects.GetEscapePowerMultiplier(player);
 
 		if (float.IsNaN(num) || float.IsInfinity(num) || num <= 0f)
 		{

@@ -67,7 +67,18 @@ Reviewed standalone AI types are `groundChase`, `flyingChase`, and `holdPosition
 
 Original enemies cannot set `spawn.inheritTemplateSpawners`, because there is no template whose spawn list can be inherited. Reference their full content ID from a data-driven stage spawner instead. The format remains experimental while custom rigs receive gameplay testing.
 
-Published behavior modules currently include regeneration, low-health berserk, lifesteal, reflected `thorns` damage, `onHitRagdoll`, content-ID-based `spawnOnDeath`, and periodic `speedPulse` movement bursts. Modules are bounded and composable; inherited attack entries can separately override damage, chance, ranges, timing, knockback, and whether the enemy moves during the attack.
+Published behavior modules currently include regeneration, low-health berserk, lifesteal, reflected `thorns` damage, `onHitRagdoll`, `onHitEquipClothing`, content-ID-based `spawnOnDeath`, and periodic `speedPulse` movement bursts. Modules are bounded and composable; inherited attack entries can separately override damage, chance, ranges, timing, knockback, and whether the enemy moves during the attack.
+
+`onHitEquipClothing` gives every successful attack by that enemy a bounded chance to attach a registered Core or mod garment. `cooldownSeconds` prevents repeated attachment attempts. The referenced clothing must be loaded and registered or the enemy definition is rejected.
+
+```json
+{
+  "type": "onHitEquipClothing",
+  "clothing": "your.pack:clothing/hex-band",
+  "chance": 0.25,
+  "cooldownSeconds": 8
+}
+```
 
 ### Downed-player finisher QTE
 
@@ -143,7 +154,14 @@ A phased `downedFinisher` may reserve up to three real secondary original-enemy 
 
 While participating, each NPC has its AI, attacks, physics, collisions, animation, facing, position, and sorting state controlled by the QTE session. That state is restored on success, failure, cancellation, component disable, or participant removal. The owner and every secondary NPC are reserved so two active interactions cannot claim the same instance.
 
-Optional `successOutcome` and `failureOutcome` objects replace the legacy fixed outcome fields. They may independently combine `healthDamage`, `strengthDamage`, `pleasure`, `libido`, `healthRecovery`, `enemyStunSeconds`, and `playerRagdollSeconds`. When an outcome object is omitted, the existing `successRecoveryHealth`, `successStunSeconds`, or `failureDamage` behavior remains in effect. The Green Stalker example demonstrates two phases with distinct animation/event rates and different success/failure effects.
+Optional `successOutcome` and `failureOutcome` objects replace the legacy fixed outcome fields. They may independently combine `healthDamage`, `strengthDamage`, `pleasure`, `libido`, `healthRecovery`, `enemyStunSeconds`, `playerRagdollSeconds`, and up to eight `equipClothing` content IDs. A common cursed-clothing setup puts `equipClothing` on `failureOutcome`, so the enemy attaches the garment only when the player loses the QTE. When an outcome object is omitted, the existing `successRecoveryHealth`, `successStunSeconds`, or `failureDamage` behavior remains in effect. The Green Stalker example demonstrates two phases with distinct animation/event rates and different success/failure effects.
+
+```json
+"failureOutcome": {
+  "healthDamage": 10,
+  "equipClothing": ["your.pack:clothing/hex-band"]
+}
+```
 
 `playerAnimation.events` is a separate player-side event track. Each entry controls exactly one effect, and multiple entries may share a timestamp:
 

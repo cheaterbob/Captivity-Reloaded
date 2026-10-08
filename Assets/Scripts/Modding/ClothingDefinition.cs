@@ -63,6 +63,8 @@ namespace CaptivityReloaded.Modding
 	public sealed class ClothingEffectsDefinition
 	{
 		[JsonProperty("damageTakenMultiplier")] public float? DamageTakenMultiplier { get; set; }
+		[JsonProperty("escapePowerMultiplier")] public float? EscapePowerMultiplier { get; set; }
+		[JsonProperty("bountyMultiplier")] public float? BountyMultiplier { get; set; }
 		[JsonProperty("statModifiers")] public Dictionary<string, float> StatModifiers { get; set; }
 	}
 
@@ -202,6 +204,10 @@ namespace CaptivityReloaded.Modding
 			if (i_effects == null) return;
 			if (i_effects.DamageTakenMultiplier.HasValue && (!IsFiniteRange(i_effects.DamageTakenMultiplier.Value, 0.05f, 2f)))
 				io_report.Add(ValidationSeverity.Error, "clothing.effects.damage-taken", "damageTakenMultiplier must be between 0.05 and 2.", i_source);
+			if (i_effects.EscapePowerMultiplier.HasValue && !IsFiniteRange(i_effects.EscapePowerMultiplier.Value, 0.1f, 3f))
+				io_report.Add(ValidationSeverity.Error, "clothing.effects.escape-power", "escapePowerMultiplier must be between 0.1 and 3.", i_source);
+			if (i_effects.BountyMultiplier.HasValue && !IsFiniteRange(i_effects.BountyMultiplier.Value, 0f, 3f))
+				io_report.Add(ValidationSeverity.Error, "clothing.effects.bounty", "bountyMultiplier must be between 0 and 3.", i_source);
 			HashSet<string> stats = new HashSet<string>(StringComparer.Ordinal) { "HealthMax", "SpeedAccel", "SpeedMax", "Traction", "DamageMultiplierGun", "SpeedSprint", "PowerJump", "PowerDash" };
 			if (i_effects.StatModifiers != null && i_effects.StatModifiers.Count > 8)
 				io_report.Add(ValidationSeverity.Error, "clothing.effects.stat-count", "statModifiers supports at most 8 entries.", i_source);
