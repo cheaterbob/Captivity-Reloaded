@@ -9,6 +9,26 @@ namespace CaptivityReloaded.Modding.Tests
 	public class ContentIdTests
 	{
 		[Test]
+		public void MoneyHud_ConfiguresLargeBalancesToFitWithoutChangingTheValue()
+		{
+			GameObject gameObject = new GameObject("Money text");
+			try
+			{
+				UnityEngine.UI.Text text = gameObject.AddComponent<UnityEngine.UI.Text>();
+				text.fontSize = 36;
+				text.text = "$1000000";
+				System.Type moneyHud = System.Type.GetType("MoneyHud, Assembly-CSharp");
+				Assert.That(moneyHud, Is.Not.Null);
+				moneyHud.GetMethod("ConfigureMoneyText").Invoke(null, new object[] { text });
+				Assert.That(text.resizeTextForBestFit, Is.True);
+				Assert.That(text.resizeTextMinSize, Is.EqualTo(18));
+				Assert.That(text.resizeTextMaxSize, Is.EqualTo(36));
+				Assert.That(text.text, Is.EqualTo("$1000000"));
+			}
+			finally { Object.DestroyImmediate(gameObject); }
+		}
+
+		[Test]
 		public void StickCircleGesture_RequiresContinuousRotation()
 		{
 			object gesture = CreateStickCircleGesture();
