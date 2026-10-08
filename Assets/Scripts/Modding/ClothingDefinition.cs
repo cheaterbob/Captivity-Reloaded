@@ -38,6 +38,8 @@ namespace CaptivityReloaded.Modding
 		[JsonProperty("gravity")] public float? Gravity { get; set; }
 		[JsonProperty("motionInfluence")] public float? MotionInfluence { get; set; }
 		[JsonProperty("maxAngle")] public float? MaxAngle { get; set; }
+		[JsonProperty("idleAmplitude")] public float? IdleAmplitude { get; set; }
+		[JsonProperty("idleFrequency")] public float? IdleFrequency { get; set; }
 	}
 
 	[JsonObject(MemberSerialization.OptIn)]
@@ -181,7 +183,8 @@ namespace CaptivityReloaded.Modding
 				else extends = parsedExtends;
 			}
 			if (string.IsNullOrWhiteSpace(document.DisplayName)) Error(result, "display-name", "displayName is required.", i_source);
-			bool original = document.Visual != null && string.Equals(document.Visual.Type, "originalClothingSprites", StringComparison.Ordinal);
+			bool original = document.Visual != null && (string.Equals(document.Visual.Type, "originalClothingSprites", StringComparison.Ordinal)
+				|| string.Equals(document.Visual.Type, "originalClothingAtlas", StringComparison.Ordinal));
 			if (original && extends.HasValue) Error(result, "original-extends", "originalClothingSprites must not inherit Core clothing.", i_source);
 			if (!original && !extends.HasValue) Error(result, "extends-required", "Inherited clothing requires extends.", i_source);
 			if (original && string.IsNullOrWhiteSpace(document.Category)) Error(result, "original-category", "Fully original clothing requires category.", i_source);
@@ -238,30 +241,33 @@ namespace CaptivityReloaded.Modding
 			}
 			bool atlasMode = string.Equals(i_visual.Type, "coreClothingAtlas", StringComparison.Ordinal);
 			bool spriteMode = string.Equals(i_visual.Type, "coreClothingSprites", StringComparison.Ordinal);
-			bool originalMode = string.Equals(i_visual.Type, "originalClothingSprites", StringComparison.Ordinal);
+			bool originalSpriteMode = string.Equals(i_visual.Type, "originalClothingSprites", StringComparison.Ordinal);
+			bool originalAtlasMode = string.Equals(i_visual.Type, "originalClothingAtlas", StringComparison.Ordinal);
+			bool originalMode = originalSpriteMode || originalAtlasMode;
 			if (!atlasMode && !spriteMode && !originalMode)
-				io_report.Add(ValidationSeverity.Error, "clothing.visual.type", "visual.type must be coreClothingAtlas, coreClothingSprites, or originalClothingSprites.", i_source);
-			if (atlasMode && (!ModPath.IsSafeRelativePath(i_visual.Atlas) || !i_visual.Atlas.EndsWith(".png", StringComparison.OrdinalIgnoreCase)))
+				io_report.Add(ValidationSeverity.Error, "clothing.visual.type", "visual.type must be coreClothingAtlas, coreClothingSprites, originalClothingSprites, or originalClothingAtlas.", i_source);
+			if ((atlasMode || originalAtlasMode) && (!ModPath.IsSafeRelativePath(i_visual.Atlas) || !i_visual.Atlas.EndsWith(".png", StringComparison.OrdinalIgnoreCase)))
 				io_report.Add(ValidationSeverity.Error, "clothing.visual.atlas", "atlas must be a safe pack-relative PNG path.", i_source);
 			if (float.IsNaN(i_visual.PixelsPerUnit) || float.IsInfinity(i_visual.PixelsPerUnit) || i_visual.PixelsPerUnit <= 0f || i_visual.PixelsPerUnit > 1024f)
 				io_report.Add(ValidationSeverity.Error, "clothing.visual.pixels-per-unit", "pixelsPerUnit must be greater than 0 and at most 1024.", i_source);
-			if (atlasMode && (i_visual.Regions == null || i_visual.Regions.Count == 0))
+			if ((atlasMode || originalAtlasMode) && (i_visual.Regions == null || i_visual.Regions.Count == 0))
 			{
 				io_report.Add(ValidationSeverity.Error, "clothing.visual.regions", "At least one atlas region is required.", i_source);
 				return;
 			}
 			foreach (KeyValuePair<string, AtlasRegionDefinition> region in i_visual.Regions ?? new Dictionary<string, AtlasRegionDefinition>())
 			{
-				if (!ClothingSlotCatalog.IsPublished(region.Key))
+				if ((originalAtlasMode ? !ClothingSlotCatalog.IsValidSlot(region.Key) : !ClothingSlotCatalog.IsPublished(region.Key)))
 					io_report.Add(ValidationSeverity.Error, "clothing.visual.region-name", "Region is not a published V1 clothing slot: " + region.Key, i_source);
 				if (region.Value == null || region.Value.X < 0 || region.Value.Y < 0 || region.Value.Width <= 0 || region.Value.Height <= 0)
 					io_report.Add(ValidationSeverity.Error, "clothing.visual.region-rect", "Region rectangle must have a non-negative origin and positive size: " + region.Key, i_source);
 			}
-			if ((spriteMode || originalMode) && (i_visual.Sprites == null || i_visual.Sprites.Count == 0))
+			if ((spriteMode || originalSpriteMode) && (i_visual.Sprites == null || i_visual.Sprites.Count == 0))
 				io_report.Add(ValidationSeverity.Error, "clothing.visual.sprites", "At least one sprite mapping is required.", i_source);
-			if (originalMode && i_visual.Sprites != null && i_visual.Sprites.Count > 33)
+			int originalPieceCount = originalAtlasMode ? (i_visual.Regions?.Count ?? 0) : (i_visual.Sprites?.Count ?? 0);
+			if (originalMode && originalPieceCount > 33)
 				io_report.Add(ValidationSeverity.Error, "clothing.visual.original-piece-count", "Fully original clothing supports an icon and at most 32 pieces.", i_source);
-			if (originalMode && (i_visual.Sprites == null || !i_visual.Sprites.ContainsKey("icon")))
+			if (originalMode && (originalAtlasMode ? i_visual.Regions == null || !i_visual.Regions.ContainsKey("icon") : i_visual.Sprites == null || !i_visual.Sprites.ContainsKey("icon")))
 				io_report.Add(ValidationSeverity.Error, "clothing.visual.original-icon", "Fully original clothing requires an icon sprite.", i_source);
 			foreach (KeyValuePair<string, string> sprite in i_visual.Sprites ?? new Dictionary<string, string>())
 			{
@@ -278,7 +284,9 @@ namespace CaptivityReloaded.Modding
 					continue;
 				}
 				ClothingAttachmentDefinition value = attachment.Value;
-				if (originalMode && (i_visual.Sprites == null || !i_visual.Sprites.ContainsKey(attachment.Key)))
+				bool hasOriginalPiece = originalAtlasMode ? i_visual.Regions != null && i_visual.Regions.ContainsKey(attachment.Key)
+					: i_visual.Sprites != null && i_visual.Sprites.ContainsKey(attachment.Key);
+				if (originalMode && !hasOriginalPiece)
 					io_report.Add(ValidationSeverity.Error, "clothing.visual.original-attachment-slot", "Original attachment definitions must match a supplied piece sprite: " + attachment.Key, i_source);
 				if (originalMode && string.IsNullOrWhiteSpace(value.Bone))
 					io_report.Add(ValidationSeverity.Error, "clothing.visual.original-attachment-bone", "Every original clothing piece must name its player bone: " + attachment.Key, i_source);
@@ -293,7 +301,8 @@ namespace CaptivityReloaded.Modding
 				ValidatePhysics(value.Physics, io_report, i_source);
 			}
 			if (originalMode)
-				foreach (string slot in i_visual.Sprites?.Keys ?? new Dictionary<string, string>().Keys)
+				foreach (string slot in originalAtlasMode ? (IEnumerable<string>)(i_visual.Regions?.Keys ?? new Dictionary<string, AtlasRegionDefinition>().Keys)
+					: (i_visual.Sprites?.Keys ?? new Dictionary<string, string>().Keys))
 					if (slot != "icon" && (i_visual.Attachments == null || !i_visual.Attachments.ContainsKey(slot)))
 						io_report.Add(ValidationSeverity.Error, "clothing.visual.original-attachment", "Every original clothing piece requires an attachment definition: " + slot, i_source);
 			foreach (KeyValuePair<string, Dictionary<string, string>> variant in i_visual.BodyVariants ?? new Dictionary<string, Dictionary<string, string>>())
@@ -320,7 +329,9 @@ namespace CaptivityReloaded.Modding
 				|| (i_physics.Damping.HasValue && !IsFiniteRange(i_physics.Damping.Value, 0f, 50f))
 				|| (i_physics.Gravity.HasValue && !IsFiniteRange(i_physics.Gravity.Value, 0f, 1f))
 				|| (i_physics.MotionInfluence.HasValue && !IsFiniteRange(i_physics.MotionInfluence.Value, 0f, 10f))
-				|| (i_physics.MaxAngle.HasValue && !IsFiniteRange(i_physics.MaxAngle.Value, 0f, 90f)))
+				|| (i_physics.MaxAngle.HasValue && !IsFiniteRange(i_physics.MaxAngle.Value, 0f, 90f))
+				|| (i_physics.IdleAmplitude.HasValue && !IsFiniteRange(i_physics.IdleAmplitude.Value, 0f, 20f))
+				|| (i_physics.IdleFrequency.HasValue && !IsFiniteRange(i_physics.IdleFrequency.Value, 0f, 5f)))
 				io_report.Add(ValidationSeverity.Error, "clothing.physics.range", "Clothing sway values are outside supported bounds.", i_source);
 		}
 

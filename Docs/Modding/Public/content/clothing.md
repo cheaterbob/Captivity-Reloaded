@@ -52,6 +52,8 @@ Enemies may attach a garment with `onHitEquipClothing` or a finisher outcome. Fo
 
 Use experimental `originalClothingSprites` without `extends` to construct a garment entirely from PNG files. An icon, category, and at least one `piece/...` sprite are required. Piece names are author-defined and every piece needs an attachment specifying its player bone. This permits back attachments, tails, jewelry, anatomy, layered armor, and other slots that do not exist on a Core garment.
 
+Use `originalClothingAtlas` for the same fully original workflow when the icon and pieces share one PNG. Supply `visual.atlas` and a `visual.regions` entry for `icon` and every `piece/...`; region coordinates use a bottom-left origin.
+
 ```json
 "visual": {
   "type": "originalClothingSprites",
@@ -78,6 +80,10 @@ Use experimental `originalClothingSprites` without `extends` to construct a garm
 ```
 
 `physics.mode: "sway"` is a bounded procedural spring intended for hanging pieces such as capes, straps, hair, and accessories. It does not add colliders or joints to the player and disables itself if the piece is torn off.
+
+`idleAmplitude` (degrees) and `idleFrequency` (cycles per second) optionally add a small authored resting motion. Both default to zero/no idle movement, so existing clothing is unchanged. Translation and rotation response still come from `motionInfluence`, with `maxAngle` bounding the combined result.
+
+The [Moving Ponytail](../../../../ExampleMods/authored-hairstyles/README.md) example shows how to split a native-size Core hairstyle into a fixed layer and a moving layer without changing its canvas, scale, or resting alignment.
 
 ## Persistent player attachments
 

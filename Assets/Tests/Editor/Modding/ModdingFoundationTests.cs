@@ -1438,6 +1438,34 @@ namespace CaptivityReloaded.Modding.Tests
 		}
 
 		[Test]
+		public void Parse_AcceptsOriginalAtlasWithCustomLayeredHairSlots()
+		{
+			const string json = @"{
+  'schemaVersion': 1, 'type': 'clothing',
+  'id': 'example.clothes:clothing/layered-hair',
+  'displayName': 'Layered Hair', 'category': 'Hair', 'unlockedByDefault': true,
+  'visual': {
+    'type': 'originalClothingAtlas', 'atlas': 'assets/hair.png', 'pixelsPerUnit': 400,
+    'regions': {
+      'icon': { 'x': 0, 'y': 0, 'width': 32, 'height': 32 },
+      'piece/hair-base': { 'x': 32, 'y': 0, 'width': 32, 'height': 32 },
+      'piece/hair-rear': { 'x': 64, 'y': 0, 'width': 32, 'height': 32 }
+    },
+    'attachments': {
+      'piece/hair-base': { 'bone': 'Head', 'attachToBone': true },
+      'piece/hair-rear': { 'bone': 'Head', 'attachToBone': true,
+        'physics': { 'mode': 'sway', 'spring': 50, 'damping': 10, 'maxAngle': 20, 'idleAmplitude': 4, 'idleFrequency': 1.1 } }
+    }
+  }
+}";
+			ClothingDefinitionLoadResult result = ClothingDefinitionParser.Parse(json, "example.clothes", "hair.json");
+			Assert.That(result.Report.IsValid, Is.True, string.Join("\n", result.Report.Issues.Select(issue => issue.Message)));
+			Assert.That(result.Definition.IsOriginal, Is.True);
+			Assert.That(result.Definition.Visual.Regions.ContainsKey("piece/hair-rear"), Is.True);
+			Assert.That(result.Definition.Visual.Attachments["piece/hair-rear"].Physics.IdleAmplitude, Is.EqualTo(4f));
+		}
+
+		[Test]
 		public void Parse_RejectsOriginalRigWithoutAttachmentForEveryPiece()
 		{
 			const string json = @"{
