@@ -299,12 +299,11 @@ public class ManagerOptions : MonoBehaviour
 		List<string> names = new List<string> { "Standard" };
 		m_gameModeIds.Add(string.Empty);
 		int selected = 0;
-		for (int i = 0; i < RuleProfileRegistry.Definitions.Count; i++)
+		foreach (RuleProfileDefinition profile in RuleProfileRegistry.SelectableDefinitions)
 		{
-			RuleProfileDefinition profile = RuleProfileRegistry.Definitions[i];
 			names.Add(profile.DisplayName);
 			m_gameModeIds.Add(profile.Id.ToString());
-			if (profile.Id.ToString() == RuleProfileRegistry.CurrentId) selected = i + 1;
+			if (profile.Id.ToString() == RuleProfileRegistry.CurrentId) selected = m_gameModeIds.Count - 1;
 		}
 		m_dropDownGameMode.AddOptions(names);
 		m_dropDownGameMode.value = selected;

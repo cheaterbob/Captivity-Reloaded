@@ -4685,10 +4685,66 @@ namespace CaptivityReloaded.Modding.Tests
 		{
 			RuleProfileLoadResult result = RuleProfileParser.Parse(ValidRule, "example.rules", "gun-game.json");
 			Assert.That(result.Report.IsValid, Is.True);
+			Assert.That(result.Definition.IsSelectable, Is.True);
 			Assert.That(result.Definition.Id, Is.EqualTo(ContentId.Parse("example.rules:rule/gun-game")));
 			Assert.That(result.Definition.WeaponProgressions, Has.Count.EqualTo(1));
 			Assert.That(result.Definition.WeaponProgressions[0].WeaponPool, Has.Count.EqualTo(2));
 			Assert.That(result.Definition.WeaponProgressions[0].ReplaceExistingWeapons, Is.True);
+		}
+
+		[Test]
+		public void Parse_AcceptsPackActivatedRulesWithoutMakingThemSelectable()
+		{
+			const string json = @"{
+  'schemaVersion': 1,
+  'type': 'ruleProfile',
+  'id': 'example.rules:rule/safety',
+  'displayName': 'Safety Rules',
+  'activation': 'pack',
+  'modules': [{ 'type': 'playerRules', 'enemyFinishersEnabled': false }]
+}";
+			RuleProfileLoadResult result = RuleProfileParser.Parse(json, "example.rules", "safety.json");
+			Assert.That(result.Report.IsValid, Is.True);
+			Assert.That(result.Definition.IsAutomaticallyActive, Is.True);
+			Assert.That(result.Definition.IsSelectable, Is.False);
+		}
+
+		[Test]
+		public void Parse_RejectsUnknownRuleActivation()
+		{
+			string json = ValidRule.Replace("'displayName': 'Gun Game',", "'displayName': 'Gun Game', 'activation': 'sometimes',");
+			RuleProfileLoadResult result = RuleProfileParser.Parse(json, "example.rules", "invalid-activation.json");
+			Assert.That(result.Report.IsValid, Is.False);
+			Assert.That(result.Report.Issues.Any(issue => issue.Code == "rule.activation"), Is.True);
+		}
+
+		[Test]
+		public void Registry_ExcludesPackActivatedRulesFromGameModeSelection()
+		{
+			RuleProfileDefinition[] previous = RuleProfileRegistry.Definitions.ToArray();
+			string previousId = RuleProfileRegistry.CurrentId;
+			const string automaticJson = @"{
+  'schemaVersion': 1, 'type': 'ruleProfile',
+  'id': 'example.rules:rule/safety', 'displayName': 'Safety Rules', 'activation': 'pack',
+  'modules': [{ 'type': 'playerRules', 'enemyFinishersEnabled': false }]
+}";
+			try
+			{
+				RuleProfileDefinition selectable = RuleProfileParser.Parse(ValidRule, "example.rules", "gun-game.json").Definition;
+				RuleProfileDefinition automatic = RuleProfileParser.Parse(automaticJson, "example.rules", "safety.json").Definition;
+				RuleProfileRegistry.Initialize(new[] { selectable, automatic });
+				Assert.That(RuleProfileRegistry.SelectableDefinitions.Select(item => item.Id),
+					Is.EquivalentTo(new[] { selectable.Id }));
+				Assert.That(RuleProfileRegistry.AutomaticallyActiveDefinitions.Select(item => item.Id),
+					Is.EquivalentTo(new[] { automatic.Id }));
+				RuleProfileRegistry.SetCurrent(automatic.Id.ToString());
+				Assert.That(RuleProfileRegistry.Current, Is.Null);
+			}
+			finally
+			{
+				RuleProfileRegistry.Initialize(previous);
+				RuleProfileRegistry.SetCurrent(previousId);
+			}
 		}
 
 		[Test]
