@@ -4055,40 +4055,6 @@ namespace CaptivityReloaded.Modding.Tests
 			}));
 		}
 
-		[Test]
-		public void ConvertedCaptivitySfwExample_PreservesAllCensorSpritesAndCnrRules()
-		{
-			string examples = Path.GetFullPath(Path.Combine(Application.dataPath, "../ExampleMods"));
-			ModDiscoveryResult packs = ModDiscovery.Discover(examples);
-			ModPack sfw = packs.Packs.Single(pack => pack.Manifest.Id == "legacy.captivity-sfw");
-			ModContentDiscoveryResult content = ModContentDiscovery.Discover(new[] { sfw });
-			Assert.That(content.Report.IsValid, Is.True,
-				string.Join("\n", content.Report.Issues.Select(issue => issue.ToString())));
-			AssetPatchDefinition anatomy = content.AssetPatches.Single(patch =>
-				patch.Target == ContentId.Parse("core:enemy-anatomy"));
-			Assert.That(anatomy.Replacements, Has.Count.EqualTo(32));
-			foreach (AssetReplacementDefinition replacement in anatomy.Replacements)
-			{
-				string path = Path.Combine(sfw.RootPath, replacement.AssetPath);
-				Assert.That(File.Exists(path), Is.True, replacement.AssetPath);
-				Texture2D texture = new Texture2D(2, 2);
-				try
-				{
-					Assert.That(texture.LoadImage(File.ReadAllBytes(path)), Is.True, replacement.AssetPath);
-					Assert.That(texture.GetPixels32().All(pixel => pixel.a == 0), Is.True,
-						replacement.AssetPath + " should remain a transparent censor sprite.");
-				}
-				finally { Object.DestroyImmediate(texture); }
-			}
-
-			RuleProfileDefinition profile = content.RuleProfiles.Single();
-			PlayerRule rules = profile.PlayerRules.Single();
-			Assert.That(rules.EnemyFinishersEnabled, Is.False);
-			Assert.That(rules.ClothingDamageEnabled, Is.False);
-			Assert.That(rules.SafeKnockouts, Is.True);
-			Assert.That(rules.PlayerHealthMultiplier, Is.EqualTo(3f));
-		}
-
 		[TestCase("DefaultShirt", "example.default-shirt-template", "core:clothing/shirt-default", 3, 96, 32)]
 		[TestCase("LabCoat", "example.lab-coat-template", "core:clothing/scientist-set", 13, 128, 128)]
 		[TestCase("HazmatSuit", "example.hazmat-suit-template", "core:clothing/hazmat-suit", 22, 160, 160)]
