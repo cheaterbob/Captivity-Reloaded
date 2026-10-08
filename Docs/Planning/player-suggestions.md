@@ -8,8 +8,7 @@ stocks, and other things that require a different type of skill check to escape
 - A spider mob shooting silk to either rope you in or cacoon trap you
 
 April Fools
-add file:///C:/Users/pepom/Downloads/Kenney%20Game%20Assets%20All-in-1%203.7.0/2D%20assets/Googly%20Eyes
-to all base enemy eyes
+- Add googly eyes to all base enemy eyes.
 
 Enemy than can hypnotise/control players
 - Ghost enemy that possesses the player and puts the in the expose animation/stance until you can push them out of you by sheer force of will (struggling)
