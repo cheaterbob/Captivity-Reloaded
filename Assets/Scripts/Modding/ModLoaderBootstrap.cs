@@ -175,6 +175,11 @@ namespace CaptivityReloaded.Modding
 			Debug.Log("[ModLoader] Validation complete. Packs=" + LoadedPacks.Count + ", registry entries=" + Registry.Count + ", valid=" + report.IsValid + ".");
 		}
 
+		public static void ReloadFromDisk()
+		{
+			Initialize();
+		}
+
 		private static void RegisterCoreCatalog(ValidationReport io_report)
 		{
 			foreach (CoreContentCatalogEntry entry in CoreContentCatalog)
