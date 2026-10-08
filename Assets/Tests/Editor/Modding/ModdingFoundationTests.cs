@@ -1058,6 +1058,20 @@ namespace CaptivityReloaded.Modding.Tests
 			Assert.That(result.Definition.Behavior.Modules.Single().PlayerAnimation.Events[0].Amount, Is.EqualTo(2f));
 			Assert.That(result.Definition.Behavior.Modules.Single().Statuses["active"].Title, Is.EqualTo("Pinned"));
 
+			foreach (string pattern in new[] { "adaptive", "alternate", "rotate", "tap" })
+			{
+				EnemyDefinitionLoadResult patterned = EnemyDefinitionParser.Parse(
+					json.Replace("'meterMax': 100", "'meterMax': 100, 'inputPattern': '" + pattern + "'"),
+					"example.enemies", "stalker-" + pattern + ".json");
+				Assert.That(patterned.Report.IsValid, Is.True, pattern + ": "
+					+ string.Join("\n", patterned.Report.Issues.Select(issue => issue.Code + ": " + issue.Message)));
+				Assert.That(patterned.Definition.Behavior.Modules.Single().InputPattern, Is.EqualTo(pattern));
+			}
+			EnemyDefinitionLoadResult invalidPattern = EnemyDefinitionParser.Parse(
+				json.Replace("'meterMax': 100", "'meterMax': 100, 'inputPattern': 'callAnyKey'"),
+				"example.enemies", "stalker-invalid-pattern.json");
+			Assert.That(invalidPattern.Report.Issues.Any(issue => issue.Code == "enemy.behavior.finisher-input-pattern"), Is.True);
+
 			EnemyDefinitionLoadResult finisherEvent = EnemyDefinitionParser.Parse(
 				json.Replace("'durationSeconds': 8,", "'durationSeconds': 8, 'animation': 'finisher',")
 					.Replace("'idle': {", "'finisher': { 'durationSeconds': 0.5, 'frames': [{ 'time': 0, 'bones': { 'hips': { 'y': 0 } } }], 'events': [{ 'time': 0.2, 'type': 'cameraShake', 'amount': 0.1 }] }, 'idle': {"),

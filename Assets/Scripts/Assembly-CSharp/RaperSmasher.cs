@@ -286,6 +286,16 @@ public class RaperSmasher : RaperGame, ISmasherHudSource
 			? "Rotate aim stick or tap Jump"
 			: "Rotate right stick";
 	}
+
+	public Sprite GetInputGlyph()
+	{
+		return InputGlyphLibrary.GetStruggleSprite();
+	}
+
+	public bool AllowsHoldInput()
+	{
+		return true;
+	}
 }
 
 public sealed class StickCircleGesture
